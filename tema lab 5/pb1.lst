@@ -1,0 +1,36 @@
+     1                                  bits 32 ; assembling for the 32 bits architecture
+     2                                  
+     3                                  ; declare the EntryPoint (a label defining the very first instruction of the program)
+     4                                  global start        
+     5                                  
+     6                                  ; declare external functions needed by our program
+     7                                  extern exit               ; tell nasm that exit exists even if we won't be defining it
+     8                                  import exit msvcrt.dll    ; exit is a function that ends the calling process. It is defined in msvcrt.dll
+     9                                                            ; msvcrt.dll contains exit, printf and all the other important C-runtime specific functions
+    10                                  
+    11                                  ; our data is declared here (the variables needed by our program)
+    12                                  segment data use32 class=data
+    13                                      ; ...
+    14 00000000 01020304                    s db 1,2,3,4 ;s:1,2,3,4
+    15                                      ls EQU $-s;ls=lungime sirului=4
+    16 00000004 00<rept>                    d times ls+ls db 0;d=0,0,0,0
+    17                                  
+    18                                  ; our code starts here
+    19                                  segment code use32 class=code
+    20                                      start:
+    21                                          ; ...
+    22                                          ;Se da un sir de octeti S de lungime l. Sa se construiasca sirul D de lungime l-1 astfel incat elementele din D sa reprezinte produsul dintre fiecare 2 elemente consecutive S(i) si S(i+1) din S
+    23 00000000 BB01000000                      MOV EBX, 1 
+    24                                          repeta: 
+    25 00000005 8A83[00000000]                    mov AL,[s+EBX] ;   in AL punem termnul al doilea din inmultirea celor doi termeni consecutivi
+    26 0000000B 4B                                dec EBX; scadem EBX cu 1
+    27 0000000C F6A3[00000000]                    mul byte[s+EBX];inmultim AL cu primul termen din inmultirea celor doi termeni consecutiv
+    28 00000012 6689841B[04000000]                mov [d+EBX*2], AX ;punem in d pe pozitia EBX-1 rezultatul
+    29 0000001A 43                                inc EBX; incrementam ebx de 2 ori pentru a avea termenul corect la urmatoarea inmultire
+    30 0000001B 43                                inc EBX 
+    31 0000001C 83FB04                            cmp EBX, ls;comparam pentru a putea iesi din loop
+    32                                          
+    33 0000001F 72E4                            JB repeta 
+    34                                          ; exit(0)
+    35 00000021 6A00                            push    dword 0      ; push the parameter for exit onto the stack
+    36 00000023 FF15[00000000]                  call    [exit]       ; call exit to terminate the program

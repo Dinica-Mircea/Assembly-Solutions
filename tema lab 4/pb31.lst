@@ -1,0 +1,42 @@
+     1                                  bits 32 ; assembling for the 32 bits architecture
+     2                                  
+     3                                  ; declare the EntryPoint (a label defining the very first instruction of the program)
+     4                                  global start        
+     5                                  
+     6                                  ; declare external functions needed by our program
+     7                                  extern exit               ; tell nasm that exit exists even if we won't be defining it
+     8                                  import exit msvcrt.dll    ; exit is a function that ends the calling process. It is defined in msvcrt.dll
+     9                                                            ; msvcrt.dll contains exit, printf and all the other important C-runtime specific functions
+    10                                  
+    11                                  ; our data is declared here (the variables needed by our program)
+    12                                  segment data use32 class=data
+    13                                      ; ...
+    14 00000000 AB6A                        A dw 0110101010101011b ;0110 1010 1010 1011b=6AABh
+    15 00000002 719E                        B dw 1001111001110001b ;1001 1110 0111 0001b=9E71h
+    16 00000004 861D                        C dw 0001110110000110b ;0001 1101 1000 0110b=1D86h
+    17 00000006 <res 00000002>              D resb 2
+    18                                  
+    19                                  ; our code starts here
+    20                                  segment code use32 class=code
+    21                                      start:
+    22                                          ; 31.Se dau cuvintele A, B si C. Sa se formeze cuvantul D ca suma a numerelor reprezentate de:
+    23                                              ;biţii de pe poziţiile 1-5 ai lui A
+    24                                              ;biţii de pe poziţiile 6-10 ai lui B
+    25                                              ;biţii de pe poziţiile 11-15 ai lui C
+    26 00000000 66A1[00000000]                  mov AX,[A] ;AX=0110 1010 1010 1011b=6AABh
+    27 00000006 66C1E00A                        shl AX,10  ;AX=1010 1100 0000 0000b=AC00h
+    28 0000000A 66C1E80B                        shr AX,11  ;AX=0000 0000 0001 0101=0015h
+    29 0000000E 660105[06000000]                add word[D],AX ;D=0000 0000 0000 1011B=000Bh
+    30 00000015 66A1[02000000]                  mov AX,[B] ;AX=1001 1110 0111 0001b=9E71h
+    31 0000001B 66C1E806                        shr AX,6   ;AX=0000 0010 0111 1001b=0279h 
+    32 0000001F 66C1E00B                        shl AX,11  ;AX=1100 1000 0000 0000b=C800h
+    33 00000023 66C1E80B                        shr AX,11  ;AX=0000 0000 0001 1001b=0019h
+    34 00000027 660105[06000000]                add word[D],AX; D=0000 0000 0010 1110b=002Eh
+    35 0000002E 66A1[04000000]                  mov AX,[C]  ;AX=0001 1101 1000 0110b=1D86h
+    36 00000034 66C1E80B                        shr AX,11   ;AX=0000 0000 0000 0011b=0003h
+    37 00000038 660105[06000000]                add word[D],AX ; D=0000 0000 0011 0001b=0031h
+    38 0000003F 668B1D[06000000]                mov BX,[D]
+    39                                          
+    40                                          ; exit(0)
+    41 00000046 6A00                            push    dword 0      ; push the parameter for exit onto the stack
+    42 00000048 FF15[00000000]                  call    [exit]       ; call exit to terminate the program

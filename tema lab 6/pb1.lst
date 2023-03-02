@@ -1,0 +1,51 @@
+     1                                  bits 32 ; assembling for the 32 bits architecture
+     2                                  
+     3                                  ; declare the EntryPoint (a label defining the very first instruction of the program)
+     4                                  global start        
+     5                                  
+     6                                  ; declare external functions needed by our program
+     7                                  extern exit               ; tell nasm that exit exists even if we won't be defining it
+     8                                  import exit msvcrt.dll    ; exit is a function that ends the calling process. It is defined in msvcrt.dll
+     9                                                            ; msvcrt.dll contains exit, printf and all the other important C-runtime specific functions
+    10                                  
+    11                                  ; our data is declared here (the variables needed by our program)
+    12                                  segment data use32 class=data
+    13                                      ; ...
+    14 00000000 78567F1244332211            s dd 127F5678h, 11223344h
+    15                                      ls equ ($-s)/4
+    16 00000000 <rept>                      d times ls dd; rezultatul dorit este d=006800F7h, 00440066h
+    16          ******************       warning: no operand for data declaration
+    17                                  ; our code starts here
+    18                                  segment code use32 class=code
+    19                                      start:
+    20                                          ; Se da un sir de dublucuvinte continand date impachetate (4 octeti scrisi ca un singur dublucuvant). Sa se obtina un nou sir de dublucuvinte, in care fiecare dublucuvant se va obtine dupa regula: suma octet
+    21 00000000 BE[00000000]                    mov esi,s;punem in esi sirul sursa
+    22 00000005 BF[08000000]                    mov edi,d;punem in esi sirul destinatie
+    23 0000000A B902000000                      mov ecx,ls; contorul ecx ia valoarea numarul de dublucuvinte din s
+    24 0000000F FC                              cld;curatam direction flag pentru a parcurge de la dreapta la stanga
+    25 00000010 E32C                            jecxz final
+    26                                          repeta:
+    27 00000012 66BB0000                            mov bx,0;in bx punem 0, el devenind dupa aceea suma octetilor pari din dublu cuvant
+    28 00000016 66BA0000                            mov dx,0;in dx punem 0, el devenind dupa aceea suma octetilor impari din dublu cuvant
+    29 0000001A AC                                  lodsb;scoatem primul octet din dublu cuvant
+    30 0000001B B400                                mov ah,0; punem in ah 0 pentru ca in ax sa fie primul octet din dublu cuvant
+    31 0000001D 6601C3                              add bx,ax; adaugam la bx primul octet(octetul 0)
+    32 00000020 AC                                  lodsb; scoatem al doilea octet din dublu cuvant(octetul 1)
+    33 00000021 B400                                mov ah,0;punem in ah 0 pentru ca in ax sa fie al doilea octet din dublu cuvant
+    34 00000023 6601C2                              add dx,ax; adaugam la dx al doilea octet(octetul 2)
+    35 00000026 AC                                  lodsb; scoatem al treilea octet din dublu cuvant(octetul 2)
+    36 00000027 B400                                mov ah,0;punem in ah 0 pentru ca in ax sa fie al treilea octet din dublu cuvant
+    37 00000029 6601C3                              add bx,ax; adaugam la bx al treilea octet(octetul 2)
+    38 0000002C AC                                  lodsb;scoatem al patrulea octet din dublu cuvant(octetul 3)
+    39 0000002D B400                                mov ah,0;punem in ah 0 pentru ca in ax sa fie al patrulea octet din dublu cuvant
+    40 0000002F 6601C2                              add dx,ax;; adaugam la dx al patrulea octet(octetul 3)
+    41 00000032 6689D8                              mov ax,bx;punem in ax suma octetilor pari
+    42 00000035 66AB                                stosw; punem in sirul sursa pe ax
+    43 00000037 6689D0                              mov ax,dx;punem in ax suma octetilor impari
+    44 0000003A 66AB                                stosw;punem in sirul sursa pe ax
+    45 0000003C E2D4                            loop repeta
+    46                                          final
+    46          ******************       warning: label alone on a line without a colon might be in error [-w+orphan-labels]
+    47                                          ; exit(0)
+    48 0000003E 6A00                            push    dword 0      ; push the parameter for exit onto the stack
+    49 00000040 FF15[00000000]                  call    [exit]       ; call exit to terminate the program
